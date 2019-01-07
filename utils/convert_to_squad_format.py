@@ -1,36 +1,48 @@
-import utils.utils
-import utils.dataset_utils
+import sys
+sys.path.insert(0, '/home/theerit/theerit/triviaqa/utils/utils.py')
+import utils
+sys.path.insert(0, '/home/theerit/theerit/triviaqa/utils/dataset_utils.py')
+import dataset_utils
 import os
 from tqdm import tqdm
 import random
 import nltk
 import argparse
-
+import pdb
 
 def get_text(qad, domain):
     local_file = os.path.join(args.web_dir, qad['Filename']) if domain == 'SearchResults' else os.path.join(args.wikipedia_dir, qad['Filename'])
-    return utils.utils.get_file_contents(local_file, encoding='utf-8')
+    return utils.get_file_contents(local_file, encoding='utf-8')
 
 
 def select_relevant_portion(text):
     paras = text.split('\n')
     selected = []
     done = False
+    count_selected_token = 0
+    len_selected = 0 
     for para in paras:
         sents = sent_tokenize.tokenize(para)
         for sent in sents:
             words = nltk.word_tokenize(sent)
             for word in words:
-                selected.append(word)
-                if len(selected) >= args.max_num_tokens:
+                count_selected_token = count_selected_token + 1
+                len_selected = len_selected + len(word)
+                #selected.append(word)
+#                 if len(selected) >= args.max_num_tokens:
+#                     done = True
+#                     break
+                if count_selected_token >= args.max_num_tokens:
                     done = True
                     break
             if done:
                 break
         if done:
             break
-        selected.append('\n')
-    st = ' '.join(selected).strip()
+        #selected.append('\n')
+    #st = ' '.join(selected).strip()
+    st = ''.join(paras)
+    st = st[:len_selected].lower()
     return st
 
 
@@ -54,7 +66,7 @@ def get_qad_triples(data):
 
 
 def convert_to_squad_format(qa_json_file, squad_file):
-    qa_json = utils.dataset_utils.read_triviaqa_data(qa_json_file)
+    qa_json = dataset_utils.read_triviaqa_data(qa_json_file)
     qad_triples = get_qad_triples(qa_json)
 
     random.seed(args.seed)
@@ -71,10 +83,10 @@ def convert_to_squad_format(qa_json_file, squad_file):
         para = {'context': selected_text, 'qas': [{'question': question, 'answers': []}]}
         data.append({'paragraphs': [para]})
         qa = para['qas'][0]
-        qa['id'] = utils.dataset_utils.get_question_doc_string(qid, qad['Filename'])
+        qa['id'] = dataset_utils.get_question_doc_string(qid, qad['Filename'])
         qa['qid'] = qid
 
-        ans_string, index = utils.dataset_utils.answer_index_in_document(qad['Answer'], selected_text)
+        ans_string, index = dataset_utils.answer_index_in_document(qad['Answer'], selected_text)
         if index == -1:
             if qa_json['Split'] == 'train':
                 continue
@@ -85,7 +97,7 @@ def convert_to_squad_format(qa_json_file, squad_file):
             break
 
     squad = {'data': data, 'version': qa_json['Version']}
-    utils.utils.write_json_to_file(squad, squad_file)
+    utils.write_json_to_file(squad, squad_file)
     print ('Added', len(data))
 
 

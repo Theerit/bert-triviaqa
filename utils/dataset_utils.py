@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import utils.utils
+import sys
+sys.path.insert(0, '/home/theerit/theerit/triviaqa/utils/utils.py')
 import utils
 
 
@@ -35,7 +36,7 @@ def read_clean_part(datum):
 
 
 def read_triviaqa_data(qajson):
-    data = utils.utils.read_json(qajson)
+    data = utils.read_json(qajson)
     # read only documents and questions that are a part of clean data set
     if data['VerifiedEval']:
         clean_data = []
