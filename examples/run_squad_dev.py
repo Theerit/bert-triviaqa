@@ -913,8 +913,8 @@ def main():
                 input_ids, input_mask, segment_ids, start_positions, end_positions = batch
                 loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions)
                 loss_dev["Epoch: " + str(ep)] = loss_dev["Epoch: " + str(ep)] +loss.item()
-                with open(str(args.output_dir) + "Loss_Train.txt", "wb") as fp:   #Pickling
-                    pickle.dump(loss_dev, fp)
+#                 with open(str(args.output_dir) + "Loss_Train.txt", "wb") as fp:   #Pickling
+#                     pickle.dump(loss_dev, fp)
 #                 if n_gpu > 1:
 #                     loss = loss.mean() # mean() to average on multi-gpu.
 #                 if args.gradient_accumulation_steps > 1:
@@ -938,9 +938,9 @@ def main():
 #             model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
 #             output_model_file = os.path.join(args.output_dir, "pytorch_model_epoch" + str(ep) + ".bin")
 #             torch.save(model_to_save.state_dict(), output_model_file)
-            ep = ep+1
+            #ep = ep+1
         loss_dev["Epoch: " + str(ep)] =loss_dev["Epoch: " + str(ep)]/batch_count
-        with open(str(args.output_dir) + str(args.trained_model) + "_Loss_Eval_Dev_" + ".pickle", "wb") as fp:   #Pickling
+        with open(str(args.output_dir) + str(args.trained_model[17:]) + "_Loss_Eval_Dev_" + str(args.trained_model[-5]) + ".pickle", "wb") as fp:   #Pickling
             pickle.dump(loss_dev, fp)  
         
 #     # Load a trained model that you have fine-tuned

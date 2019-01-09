@@ -6,6 +6,7 @@ from collections import Counter
 import string
 import re
 import sys
+import pdb
 import argparse
 import utils.dataset_utils
 import utils.utils
@@ -104,6 +105,7 @@ def evaluate_triviaqa(ground_truth, predicted_answers, qid_list=None, mute=False
     if qid_list is None:
         qid_list = ground_truth.keys()
     for qid in qid_list:
+        #pdb.set_trace()
         if qid not in predicted_answers:
             if not mute:
                 message = 'Missed question {} will receive score 0.'.format(qid)
@@ -147,10 +149,12 @@ if __name__ == '__main__':
     args = get_args()
 
     dataset_json = utils.dataset_utils.read_triviaqa_data(args.dataset_file)
+ 
     if dataset_json['Version'] != expected_version:
         print('Evaluation expects v-{} , but got dataset with v-{}'.format(expected_version,dataset_json['Version']),
               file=sys.stderr)
     key_to_ground_truth = utils.dataset_utils.get_key_to_ground_truth(dataset_json)
     predictions = utils.utils.read_json(args.prediction_file)
+    #pdb.set_trace()
     eval_dict = evaluate_triviaqa(key_to_ground_truth, predictions)
     print(eval_dict)

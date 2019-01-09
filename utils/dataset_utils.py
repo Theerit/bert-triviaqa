@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
-sys.path.insert(0, '/home/theerit/theerit/triviaqa/utils/utils.py')
-import utils
-
+#sys.path.insert(0, '/home/theerit/bert-triviaqa/utils/utils.py')
+import utils.utils
+import pdb
 
 # Key for wikipedia eval is question-id. Key for web eval is the (question_id, filename) tuple
 def get_key_to_ground_truth(data):
     if data['Domain'] == 'Wikipedia':
-        return {datum['QuestionId']: datum['Answer'] for datum in data['Data']}
+        #pdb.set_trace()
+        return {datum['QuestionId']+'--'+datum['EntityPages'][0]['Filename'] : datum['Answer'] for datum in data['Data']}
     else:
         return get_qd_to_answer(data)
 
@@ -36,7 +37,7 @@ def read_clean_part(datum):
 
 
 def read_triviaqa_data(qajson):
-    data = utils.read_json(qajson)
+    data = utils.utils.read_json(qajson)
     # read only documents and questions that are a part of clean data set
     if data['VerifiedEval']:
         clean_data = []
