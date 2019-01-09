@@ -28,6 +28,7 @@ import os
 import random
 import pickle
 from tqdm import tqdm, trange
+import pdb
 
 import numpy as np
 import torch
@@ -141,9 +142,13 @@ def read_squad_examples(input_file, is_training):
                 end_position = None
                 orig_answer_text = None
                 if is_training:
-                    if len(qa["answers"]) != 1:
-                        raise ValueError(
-                            "For training, each question should have exactly 1 answer.")
+                    #pdb.set_trace()
+#                     if len(qa["answers"]) != 1:
+#                         raise ValueError(
+#                             "For training, each question should have exactly 1 answer.")
+                    if len(qa["answers"]) == 0:
+                        logger.info("Skip question without answer")
+                        continue
                     answer = qa["answers"][0]
                     orig_answer_text = answer["text"]
                     answer_offset = answer["answer_start"]
@@ -888,15 +893,22 @@ def main():
             train_sampler = RandomSampler(train_data)
         else:
             train_sampler = DistributedSampler(train_data)
-        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)
-
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)        
+        
         model.train()
+        loss_train = {}
+        ep = 0
         for _ in trange(int(args.num_train_epochs), desc="Epoch"):
+            ep = ep+1
+            batch_count = 0
             for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
                 if n_gpu == 1:
                     batch = tuple(t.to(device) for t in batch) # multi-gpu does scattering it-self
                 input_ids, input_mask, segment_ids, start_positions, end_positions = batch
                 loss = model(input_ids, segment_ids, input_mask, start_positions, end_positions)
+                loss_train['Epoch: '+str(ep) + 'Batch: ' + str(batch_count)] = loss.item()
+                with open(str(args.output_dir) + "Loss_Train.txt", "wb") as fp:   #Pickling
+                    pickle.dump(loss_train, fp)
                 if n_gpu > 1:
                     loss = loss.mean() # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
@@ -914,11 +926,14 @@ def main():
                     optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
+                    batch_count += 1
+                    
+            # Save a trained model
+            model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+            output_model_file = os.path.join(args.output_dir, "pytorch_model_epoch" + str(ep) + ".bin")
+            torch.save(model_to_save.state_dict(), output_model_file)
 
-    # Save a trained model
-    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
-    torch.save(model_to_save.state_dict(), output_model_file)
+    
 
     # Load a trained model that you have fine-tuned
     model_state_dict = torch.load(output_model_file)
